@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Configuration;
+using System;
 using System.IO;
 
 /*
@@ -37,23 +38,95 @@ namespace csharp_biblioteca
     {
         static void Main(string[] args)
         {
-            
+            string sFileLavoro;
+            string? vPublicEnv = Environment.GetEnvironmentVariable("PUBLIC");
+            if (vPublicEnv != null)
+                Console.WriteLine("Valore: {0}", vPublicEnv);
+
+            vPublicEnv = vPublicEnv + "\\Biblioteca";
+
+            if (Directory.Exists(@"c:\users\public\biblioteca"))
+            {
+                Console.WriteLine("La directory è già esistente");
+
+                if (File.Exists(vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt"))
+                {
+                    Console.WriteLine("Il file .txt è già esistente");
+                    //devo leggere biblioteca.txt che esiste, e capire il file su quale lavorare
+                    //sFileLavoro = vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt";
+                }
+                else
+                {
+                    Console.WriteLine("Dove inserire il file? Altrimenti premi INVIO");
+                    string sFilePos = Console.ReadLine();
+
+                    if (sFilePos == "")
+                    {
+                        StreamWriter sw = new StreamWriter(vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt"); //sFileLavoro = Biblioteca.txt
+                        sw.WriteLine("Section:fileConf");
+                        sw.WriteLine(vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt");
+                        Console.WriteLine("Il file è stato creato");
+                        sw.Close();
+                    }
+                    else
+                    {
+                        StreamWriter sw = new StreamWriter(vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt"); //sFileLavoro = è quello che mi ha detto l'utente
+                        sw.WriteLine("Section:fileConf");
+                        sw.WriteLine(sFilePos);
+                        Console.WriteLine("Il file è stato creato");
+                        sw.Close();
+                    }
+                }
+            }
+            else
+            {
+                Directory.CreateDirectory(vPublicEnv + "\\biblioteca");
+                Console.WriteLine("La directory è stata creata");
+                Console.WriteLine("Dove inserire il file? Altrimenti premi INVIO");
+                string sFilePos = Console.ReadLine();
+
+                if (sFilePos == "")
+                {
+                    StreamWriter sw = new StreamWriter(vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt"); //sFileLavoro = Biblioteca.txt
+                    sw.WriteLine("Section:fileConf");
+                    sw.WriteLine(vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt");
+                    Console.WriteLine("Il file è stato creato");
+                    sw.Close();
+                }
+                else
+                {
+                    StreamWriter sw = new StreamWriter(vPublicEnv + "\\Biblioteca" + "\\Biblioteca.txt"); //sFileLavoro = è quello che mi ha detto l'utente
+                    sw.WriteLine("Section:fileConf");
+                    sw.WriteLine(sFilePos);
+                    Console.WriteLine("Il file è stato creato");
+                    sw.Close();
+                }
+            }
+
+            AddUpdateAppSettings("Path", vPublicEnv + "\\biblioteca" + "\\biblioteca.txt");
+            ReadAllSettings();
+            //quale è il file su quale devo lavorare? sFileLavoro
+
+            Console.WriteLine("Non ho creato la directory");
+
+            Console.WriteLine("Mi trovo in {0}", Directory.GetCurrentDirectory());
+
             biblioteca b = new biblioteca("Biblioteca Civica");
-            
+
             scaffale scaffale = new scaffale("S001");
-            
+
             libro l1 = new libro("ISBN1", "Titolo libro", 2009, "Storia", 220);
-            
+
             autore a1 = new autore("Robert", "Kiyosaki");
-            
+
             l1.Autori.Add(a1);
-            
+
             b.Documenti.Add(l1);
-            
+
             l1.Scaffale = scaffale;
 
             dvd dvd1 = new dvd("Codice1", "Titolo del dvd", 2019, "Storia", 130);
-            
+
             b.Documenti.Add(dvd1);
 
             utente u1 = new utente("Mario", "Rossi", "Telefono 1", "Email 1", "Password 1");
@@ -95,8 +168,71 @@ namespace csharp_biblioteca
                 Console.WriteLine("-----------------");
             }
 
-            b.SaveUtenti("file.txt");
+            b.SaveUtenti(vPublicEnv + "\\biblioteca" + "\\biblioteca.txt");
 
         }
+
+        static void ReadAllSettings()
+        {
+            try
+            {
+                var appSettings = ConfigurationManager.AppSettings;
+                if (appSettings.Count == 0)
+                {
+                    Console.WriteLine("AppSettings is empty.");
+                }
+                else
+                {
+                    foreach (var key in appSettings.AllKeys)
+                    {
+                        Console.WriteLine("Key: {0} Value: {1}", key, appSettings[key]);
+                    }
+                }
+            }
+            catch (ConfigurationErrorsException)
+            {
+                Console.WriteLine("Error reading app settings");
+            }
+        }
+
+
+        static string ReadSetting(string key)
+        {
+            try
+            {
+                var appSettings = ConfigurationManager.AppSettings;
+                string result = appSettings[key] ?? "Not Found";
+                return result;
+            }
+            catch (ConfigurationErrorsException)
+            {
+                Console.WriteLine("Error reading app settings");
+                return "";
+            }
+        }
+        static void AddUpdateAppSettings(string key, string value)
+        {
+            try
+            {
+                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                var settings = configFile.AppSettings.Settings;
+                if (settings[key] == null)
+                {
+                    settings.Add(key, value);
+                }
+                else
+                {
+                    settings[key].Value = value;
+                }
+                configFile.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
+            }
+            catch (ConfigurationErrorsException)
+            {
+                Console.WriteLine("Error writing app settings");
+            }
+
+        }
+
     }
 }
