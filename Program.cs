@@ -231,8 +231,6 @@ namespace csharp_biblioteca
             {
                 Console.WriteLine("Error writing app settings");
             }
-
         }
-
     }
 }
